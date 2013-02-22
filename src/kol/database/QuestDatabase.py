@@ -1,5 +1,6 @@
 "This module is used as a database for KoL quest information."
 
+import re
 import kol.Error as Error
 from kol.data import Quests
 from kol.manager import FilterManager
@@ -45,7 +46,11 @@ def getQuestFromName(questName, session=None):
         init()
 
     try:
-        return __questsByName[questName].copy()
+        for name in __questByName.keys():
+           if re.match(name, questName) != None:
+              quest = __questsByName[name].copy()
+              quest["name"] = questName
+              return quest
     except KeyError:
         cxt = {}
         FilterManager.executeFiltersForEvent("couldNotFindQuest", cxt, session=session, questName=questName)

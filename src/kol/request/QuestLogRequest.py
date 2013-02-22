@@ -10,10 +10,8 @@ class QuestLogRequest(GenericRequest):
     def __init__(self, session, page):
         super(QuestLogRequest, self).__init__(session)
 
-        # current quests
-        #self.url = session.serverURL + "questlog.php?which=1"
-
-        # completed quests
+        # page=1 for current quests
+        # page=2 for completed quests
         self.url = session.serverURL + "questlog.php?which=" + str(page)
 
     def parseResponse(self):
@@ -21,28 +19,18 @@ class QuestLogRequest(GenericRequest):
         self.responseData["text"] = self.responseText
 
         questTitlePattern = PatternManager.getOrCompilePattern("questsCompleted")
+        questOrePattern = PatternManager.getOrCompilePattern("oreType")
 
         # make a map from quest names to quest descriptions
         quests = {}
         for match in questTitlePattern.finditer(self.responseText):
-           quests[match.group(1)] = match.group(2)
-        
-        """quests = []
-        for match in questTitlePattern.finditer(self.responseText):
-           quest = {}
-           quest["name"] = match.group(1)
-           quest["description"] = match.group(2)
-           quests.append(quest)"""
-        
-        self.responseData["quests"] = quests
-"""
-        noItemPattern = PatternManager.getOrCompilePattern("notEnoughItems")
-        match = noItemPattern.search(self.responseText)
-        if match:
-            raise Error.Error("That item is not in your inventory.", Error.ITEM_NOT_FOUND)
+            quest = {}
+            quest['status'] = match.group(2)
 
-        notEquipmentPattern = PatternManager.getOrCompilePattern("notEquip")
-        match = notEquipmentPattern.search(self.responseText)
-        if match:
-            raise Error.Error("That is not an equippable item.", Error.WRONG_KIND_OF_ITEM)
-"""
+            # for the Mt. McLargeHuge quest
+            oreMatch = questOrePattern.search(match.group(2))
+            if oreMatch != None:
+                quest['oreType'] = oreMatch.group(1)
+            quests[match.group(1)] = quest
+ 
+        self.responseData["quests"] = quests
